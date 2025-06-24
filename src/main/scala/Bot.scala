@@ -16,9 +16,11 @@ import org.zaquest.tgchat.store.{SessionStore, ChatId}
 import telegramium.bots.BotCommandScopeAllPrivateChats
 import telegramium.bots.BotCommand
 
+
 case class TelegramConfig(
     token: String
 )
+
 
 class TgChatBot[F[_]: Parallel: Async](
     chat: ChatClient[F],
@@ -51,20 +53,32 @@ class TgChatBot[F[_]: Parallel: Async](
         .exec
     } yield ()
 
-  def setCommands(): F[Unit] =
-    setMyCommands(
-      commands = List(
-        BotCommand("/clear", "Забыть текущий разговор.")
-      ),
-      scope = Some(BotCommandScopeAllPrivateChats),
-      languageCode = Some("ru")
-    ).exec.void
-    setMyCommands(
-      commands = List(
-        BotCommand("/clear", "Forget current conversation.")
-      ),
-      scope = Some(BotCommandScopeAllPrivateChats),
-    ).exec.void
+  def setCommands(): F[Unit] = for {
+      // Clear and set commands in Russian
+      _ <- deleteMyCommands(
+        scope = Some(BotCommandScopeAllPrivateChats),
+        languageCode = Some("ru")
+      ).exec
+      _ <- setMyCommands(
+        commands = List(
+          BotCommand("/clear", "Забыть текущий разговор."),
+        ),
+        scope = Some(BotCommandScopeAllPrivateChats),
+        languageCode = Some("ru")
+      ).exec
+
+      // Clear and set commands for th rest
+      _ <- deleteMyCommands(
+        scope = Some(BotCommandScopeAllPrivateChats),
+      ).exec
+      _ <- setMyCommands(
+        commands = List(
+          BotCommand("/clear", "Forget current conversation."),
+        ),
+        scope = Some(BotCommandScopeAllPrivateChats),
+      ).exec
+    } yield ()
+
 
 object TgChatBot:
 
